@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # Service for the books microservice
+  books-service:
+    build: 
+      context: ./books-service
+    container_name: books-service
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+      - redis
+      - message-broker
+    environment:
+      MONGO_URI: mongodb://mongo:27017/bookstore
+      REDIS_HOST: redis
+      MESSAGE_BROKER_URL: amqp://message-broker
+
+  # Service for the users microservice
+  users-service:
+    build: 
+      context: ./users-service
+    container_name: users-service
+    restart: always
+    ports:
+      - "3001:3001"
+    depends_on:
+      - mongo
+      - redis
+      - message-broker
+    environment:
+      MONGO_URI: mongodb://mongo:27017/bookstore
+      REDIS_HOST: redis
+      MESSAGE_BROKER_URL: amqp://message-broker
+
+  # Service for the purchases microservice
+  purchases-service:
+    build: 
+      context: ./purchases-service
+    container_name: purchases-service
+    restart: always
+    ports:
+      - "3002:3002"
+    depends_on:
+      - mongo
+      - redis
+      - message-broker
+    environment:
+      MONGO_URI: mongodb://mongo:27017/bookstore
+      REDIS_HOST: redis
+      MESSAGE_BROKER_URL: amqp://message-broker
+
+  # MongoDB database service
+  mongo:
+    image: mongo:4.4
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # Redis cache service
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # RabbitMQ message broker
+  message-broker:
+    image: rabbitmq:3-management
+    container_name: message-broker
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+volumes:
+  mongo_data:
