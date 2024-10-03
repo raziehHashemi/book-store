@@ -43,4 +43,13 @@ export class BooksService {
 			throw error;
 		}
 	}
+
+	async findByIds(ids: string[]): Promise<Book[]> {
+		try {
+			const books = await this.bookRepository.findByIds(ids);
+			return books;
+		} catch (error) {
+			throw error;
+		}
+	}
 }

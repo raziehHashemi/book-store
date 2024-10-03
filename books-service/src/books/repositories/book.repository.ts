@@ -16,7 +16,7 @@ export class BookRepository implements IBookRepository {
             const createdBook = new this.bookModel(createBookDto);
             return await createdBook.save();
         } catch (error) {
-            throw new Error('Error creating book');
+            throw error;
         }
     }
 
@@ -25,7 +25,7 @@ export class BookRepository implements IBookRepository {
             const books = await this.bookModel.find(query).exec();
             return books;
         } catch (error) {
-            throw new Error('Error fetching books');
+            throw error;
         }
     }
 
@@ -34,7 +34,15 @@ export class BookRepository implements IBookRepository {
             const book = await this.bookModel.findById(id).exec();
             return book;
         } catch (error) {
-            throw new Error(`Error finding book with id ${id}`);
+            throw error;
+        }
+    }
+
+    async findByIds(bookIds: string[]): Promise<Book[]> {
+        try {
+            return this.bookModel.find({ _id: { $in: bookIds } }).exec();
+        } catch (error) {
+            throw error;
         }
     }
 }

@@ -35,4 +35,13 @@ export class BooksController {
 			throw error;
 		}
 	}
+
+	@MessagePattern({ cmd: 'find_books_by_ids' })
+	async findBookByIds(ids: string[]) {
+		try {
+			return await this.booksService.findByIds(ids);
+		} catch (error) {
+			throw error;
+		}
+	}
 }
