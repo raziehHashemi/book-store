@@ -20,9 +20,9 @@ export class PurchaseRepository implements IPurchaseRepository {
         }
     }
 
-    async findAll(): Promise<Purchase[]> {
+    async findAll(userId: string): Promise<Purchase[]> {
         try {
-            return this.purchaseModel.find().exec();
+            return this.purchaseModel.find({ userId }).exec();
         } catch (error) {
             throw error;
         }
@@ -32,6 +32,14 @@ export class PurchaseRepository implements IPurchaseRepository {
         try {
             const purchase = await this.purchaseModel.findById(purchaseId);
             return purchase;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async findByUserId(userId: string): Promise<Purchase> {
+        try {
+            return this.purchaseModel.findOne({ userId }).exec();
         } catch (error) {
             throw error;
         }
@@ -58,15 +66,6 @@ export class PurchaseRepository implements IPurchaseRepository {
             }
 
             return await purchase.save();
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    async removePurchase(purchaseId: string): Promise<Purchase> {
-        try {
-            const purchase = await this.findById(purchaseId);
-            return await purchase.deleteOne();
         } catch (error) {
             throw error;
         }

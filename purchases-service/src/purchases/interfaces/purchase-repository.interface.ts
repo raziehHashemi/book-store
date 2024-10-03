@@ -3,9 +3,9 @@ import { Purchase } from "../schemas/purchase.schema";
 
 export interface IPurchaseRepository {
     createPurchase(createPurchaseDto: CreatePurchaseDto): Promise<Purchase>;
-    findAll(): Promise<Purchase[]>;
+    findAll(userId: string): Promise<Purchase[]>;
     findById(purchaseId: string): Promise<Purchase>;
     addItemToCart(purchaseId: string, bookId: string, price: number): Promise<Purchase>;
     removeItemFromCart(purchaseId: string, bookId: string, price: number): Promise<Purchase>;
-    removePurchase(purchaseId: string): Promise<Purchase>
+    findByUserId(userId: string): Promise<Purchase>;
 }

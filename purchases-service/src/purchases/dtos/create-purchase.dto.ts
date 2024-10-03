@@ -12,7 +12,7 @@ export class CreatePurchaseDto {
   @IsString({ each: true })
   bookIds: string[];
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
   totalAmount: number;
 

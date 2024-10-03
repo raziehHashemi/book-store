@@ -16,6 +16,7 @@ export class PurchasesService {
 	async createPurchase(createPurchaseDto: CreatePurchaseDto): Promise<Purchase> {
 		try {
 			const { userId, bookIds } = createPurchaseDto;
+			createPurchaseDto.status = 'pending';
 
 			const books = await lastValueFrom(
 				this.booksServiceClient.send<Book[]>({ cmd: 'find_books_by_ids' }, bookIds)
@@ -25,12 +26,12 @@ export class PurchasesService {
 				throw new NotFoundException('One or more books not found');
 			}
 
-			const totalPrice = books.reduce((acc, book) => acc + book.price, 0);
+			createPurchaseDto.totalAmount = books.reduce((acc, book) => acc + book.price, 0);
 
 			const purchase = await this.purchaseRepository.createPurchase({
 				userId,
 				bookIds,
-				totalAmount: totalPrice,
+				totalAmount: createPurchaseDto.totalAmount,
 				status: 'pending',
 			});
 
@@ -40,9 +41,9 @@ export class PurchasesService {
 		}
 	}
 
-	async findAll(): Promise<Purchase[]> {
+	async findAll(userId: string): Promise<Purchase[]> {
 		try {
-			const purchases = await this.purchaseRepository.findAll();
+			const purchases = await this.purchaseRepository.findAll(userId);
 			return purchases;
 		} catch (error) {
 			throw error;
@@ -61,28 +62,36 @@ export class PurchasesService {
 		}
 	}
 
-	async addItemToCart(purchaseId: string, bookId: string): Promise<Purchase> {
+	async addItemToCart(userId: string, bookId: string): Promise<Purchase> {
 		try {
-			const purchase = await this.purchaseRepository.findById(purchaseId);
-
 			const book = await lastValueFrom(
 				this.booksServiceClient.send<Book>({ cmd: 'find_book_by_id' }, bookId)
 			);
-
 			if (!book) {
 				throw new NotFoundException(`Book with id ${bookId} not found`);
 			}
+			let purchase = await this.purchaseRepository.findByUserId(userId);
 
-			const updatedPurchase = await this.purchaseRepository.addItemToCart(purchaseId, bookId, book.price);
+			if (!purchase) {
+				const createPurchaseDto: CreatePurchaseDto = {
+					userId,
+					bookIds: [bookId],
+					status: 'pending',
+					totalAmount: book.price,
+				};
+				purchase = await this.createPurchase(createPurchaseDto);
+			}
+
+			const updatedPurchase = await this.purchaseRepository.addItemToCart(purchase.id, bookId, book.price);
 			return updatedPurchase;
 		} catch (error) {
 			throw error;
 		}
 	}
 
-	async removeItemFromCart(purchaseId: string, bookId: string): Promise<Purchase> {
+	async removeItemFromCart(userId: string, bookId: string): Promise<Purchase> {
 		try {
-			const purchase = await this.purchaseRepository.findById(purchaseId);
+			const purchase = await this.purchaseRepository.findByUserId(userId);
 
 			const book = await lastValueFrom(
 				this.booksServiceClient.send<Book>({ cmd: 'find_one_book' }, bookId)
@@ -92,16 +101,16 @@ export class PurchasesService {
 				throw new NotFoundException(`Book with id ${bookId} not found`);
 			}
 
-			const updatedPurchase = await this.purchaseRepository.removeItemFromCart(purchaseId, bookId, book.price);
+			const updatedPurchase = await this.purchaseRepository.removeItemFromCart(purchase.id, bookId, book.price);
 			return updatedPurchase;
 		} catch (error) {
 			throw error;
 		}
 	}
 
-	async completePurchase(purchaseId: string): Promise<Purchase> {
+	async completePurchase(userId: string): Promise<Purchase> {
 		try {
-			const purchase = await this.purchaseRepository.findById(purchaseId);
+			const purchase = await this.purchaseRepository.findByUserId(userId);
 
 			if (purchase.status !== 'pending') {
 				throw new NotFoundException('Purchase already completed or invalid');
@@ -110,14 +119,6 @@ export class PurchasesService {
 			purchase.status = 'completed';
 
 			return await purchase.save();
-		} catch (error) {
-			throw error;
-		}
-	}
-
-	async removePurchase(purchaseId: string): Promise<Purchase> {
-		try {
-			return await this.purchaseRepository.removePurchase(purchaseId);
 		} catch (error) {
 			throw error;
 		}
