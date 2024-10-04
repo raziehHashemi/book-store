@@ -27,6 +27,15 @@ export class BooksController {
 		}
 	}
 
+	@Get('popular')
+	getTopBooks() {
+		try {
+			return this.booksService.getTopBooks();
+		} catch (error) {
+
+		}
+	}
+
 	@MessagePattern({ cmd: 'find_book_by_id' })
 	async findBookById(id: string) {
 		try {
