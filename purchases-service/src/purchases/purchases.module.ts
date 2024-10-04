@@ -7,6 +7,7 @@ import { PurchasesService } from './services/purchases.service';
 import { PurchaseRepository } from './repositories/purchase.repository';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { PaymentAdapter } from './adapter/payment.adapter';
 
 @Module({
     imports: [
@@ -38,6 +39,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         {
             provide: 'PurchasesService',
             useClass: PurchasesService,
+        },
+        {
+            provide: 'PaymentAdapter',
+            useClass: PaymentAdapter
         }
     ],
 })

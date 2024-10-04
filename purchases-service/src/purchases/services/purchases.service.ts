@@ -5,12 +5,14 @@ import { CreatePurchaseDto } from '../dtos/create-purchase.dto';
 import { ClientProxy } from '@nestjs/microservices';
 import { Book } from '../schemas/book.schema';
 import { lastValueFrom } from 'rxjs';
+import { IPaymentAdapter } from '../interfaces/payment-adapter.interface';
 
 @Injectable()
 export class PurchasesService {
 	constructor(
 		@Inject('PurchaseRepositoryService') private readonly purchaseRepository: IPurchaseRepository,
 		@Inject('BOOKS_SERVICE') private readonly booksServiceClient: ClientProxy,
+		@Inject('PaymentAdapter') private readonly paymentAdapter: IPaymentAdapter
 	) { }
 
 	async createPurchase(createPurchaseDto: CreatePurchaseDto): Promise<Purchase> {
@@ -116,7 +118,11 @@ export class PurchasesService {
 				throw new NotFoundException('Purchase already completed or invalid');
 			}
 
-			purchase.status = 'completed';
+			if (await this.paymentAdapter.payment(userId, purchase.totalAmount)) {
+				purchase.status = 'completed';
+			} else {
+				purchase.status = 'failed';
+			}
 
 			return await purchase.save();
 		} catch (error) {
