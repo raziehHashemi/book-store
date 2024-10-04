@@ -6,12 +6,15 @@ import { ClientProxy } from '@nestjs/microservices';
 import { Book } from '../schemas/book.schema';
 import { lastValueFrom } from 'rxjs';
 import { IPaymentAdapter } from '../interfaces/payment-adapter.interface';
+import { User } from '../schemas/user.schema';
+import { MEMBERSHIP_TYPE } from '../enums/membership.enum';
 
 @Injectable()
 export class PurchasesService {
 	constructor(
 		@Inject('PurchaseRepositoryService') private readonly purchaseRepository: IPurchaseRepository,
 		@Inject('BOOKS_SERVICE') private readonly booksServiceClient: ClientProxy,
+		@Inject('USER_SERVICE') private readonly userServiceClient: ClientProxy,
 		@Inject('PaymentAdapter') private readonly paymentAdapter: IPaymentAdapter
 	) { }
 
@@ -24,16 +27,24 @@ export class PurchasesService {
 				this.booksServiceClient.send<Book[]>({ cmd: 'find_books_by_ids' }, bookIds)
 			);
 
+			const user = await lastValueFrom(
+				this.userServiceClient.send<User>({ cmd: 'find_user_by_id' }, userId)
+			);
+
 			if (!books || books.length !== bookIds.length) {
 				throw new NotFoundException('One or more books not found');
 			}
 
 			createPurchaseDto.totalAmount = books.reduce((acc, book) => acc + book.price, 0);
+			createPurchaseDto.totalAmountWithDiscount =
+				user.membershipType === MEMBERSHIP_TYPE.PREMIUM ?
+					createPurchaseDto.totalAmount * 0.9 : createPurchaseDto.totalAmount;
 
 			const purchase = await this.purchaseRepository.createPurchase({
 				userId,
 				bookIds,
 				totalAmount: createPurchaseDto.totalAmount,
+				totalAmountWithDiscount: createPurchaseDto.totalAmountWithDiscount,
 				status: 'pending',
 			});
 
@@ -74,12 +85,20 @@ export class PurchasesService {
 			}
 			let purchase = await this.purchaseRepository.findByUserId(userId);
 
+			const user = await lastValueFrom(
+				this.userServiceClient.send<User>({ cmd: 'find_user_by_id' }, userId)
+			);
+
+
 			if (!purchase) {
 				const createPurchaseDto: CreatePurchaseDto = {
 					userId,
 					bookIds: [bookId],
 					status: 'pending',
 					totalAmount: book.price,
+					totalAmountWithDiscount:
+						user.membershipType === MEMBERSHIP_TYPE.PREMIUM ?
+							book.price * 0.7 : book.price
 				};
 				purchase = await this.createPurchase(createPurchaseDto);
 			}
@@ -118,7 +137,7 @@ export class PurchasesService {
 				throw new NotFoundException('Purchase already completed or invalid');
 			}
 
-			if (await this.paymentAdapter.payment(userId, purchase.totalAmount)) {
+			if (await this.paymentAdapter.payment(userId, purchase.totalAmountWithDiscount || purchase.totalAmount)) {
 				purchase.status = 'completed';
 			} else {
 				purchase.status = 'failed';
