@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, Inject } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Inject, Res, HttpStatus } from '@nestjs/common';
 import { BooksService } from '../services/books.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { SearchBooksDto } from '../dtos/search-book.dto';
@@ -10,29 +10,64 @@ export class BooksController {
 	) { }
 
 	@Get()
-	findAll(@Query() query: SearchBooksDto) {
+	async findAll(
+		@Query() query: SearchBooksDto,
+		@Res() res
+	) {
 		try {
-			return this.booksService.search(query);
+			const books = await this.booksService.search(query);
+			return res.status(HttpStatus.OK).json({
+				statusCode: HttpStatus.OK,
+				message: 'Books are found successfully',
+				data: books,
+			});
 		} catch (error) {
-
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: 'Error in returnin books.',
+				error: error.message,
+			});
 		}
 	}
 
 	@Get(':id')
-	findOne(@Param('id') id: string) {
+	async findOne(
+		@Param('id') id: string,
+		@Res() res
+	) {
 		try {
-			return this.booksService.findOne(id);
+			const book = await this.booksService.findOne(id);
+			return res.status(HttpStatus.OK).json({
+				statusCode: HttpStatus.OK,
+				message: 'Book is found successfully',
+				data: book,
+			});
 		} catch (error) {
-
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: 'Error in returnin books.',
+				error: error.message,
+			});
 		}
 	}
 
 	@Get('popular')
-	getTopBooks() {
+	async getTopBooks(
+		@Res() res
+	) {
 		try {
-			return this.booksService.getTopBooks();
+			const books = await this.booksService.getTopBooks();
+			return res.status(HttpStatus.OK).json({
+				statusCode: HttpStatus.OK,
+				message: 'Books are found successfully',
+				data: books,
+			});
 		} catch (error) {
-
+			return res.status(HttpStatus.BAD_REQUEST).json({
+				statusCode: HttpStatus.BAD_REQUEST,
+				message: 'Error in returnin books.',
+				error: error.message,
+			});
 		}
 	}
 

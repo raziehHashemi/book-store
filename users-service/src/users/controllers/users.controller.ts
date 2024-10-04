@@ -1,7 +1,7 @@
-import { Controller, Post, Body, Get, Param, Patch, Inject } from '@nestjs/common';
+import { Controller, Post, Body, Inject, HttpStatus, Res } from '@nestjs/common';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UsersService } from '../services/users.service';
-import { Ctx, MessagePattern, Payload, RmqContext } from '@nestjs/microservices';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('users')
 export class UsersController {
@@ -28,23 +28,45 @@ export class UsersController {
     @Post('login')
     async login(
         @Body('username') username: string,
-        @Body('password') password: string
+        @Body('password') password: string,
+        @Res() res
     ) {
         try {
-            return this.usersService.login(username, password);
+            const user = await this.usersService.login(username, password);
+            return res.status(HttpStatus.OK).json({
+                message: 'Login successful',
+                data: user,
+                statusCode: HttpStatus.OK
+            });
         } catch (error) {
-
+            console.error('Login error:', error);
+            return res.status(HttpStatus.BAD_REQUEST).json({
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'Invalid credentials',
+                error: error.message,
+            });
         }
     }
 
     @Post('signup')
     async signup(
-        @Body() createUserDto: CreateUserDto
+        @Body() createUserDto: CreateUserDto,
+        @Res() res
     ) {
         try {
-            return this.usersService.sighUp(createUserDto);
+            const newUser = await this.usersService.sighUp(createUserDto);
+            return res.status(HttpStatus.OK).json({
+                message: 'User created successfully',
+                data: newUser,
+                statusCode: HttpStatus.OK
+            });
         } catch (error) {
-
+            console.error('Signup error:', error);
+            return res.status(HttpStatus.BAD_REQUEST).json({
+                statusCode: HttpStatus.BAD_REQUEST,
+                message: 'User creation failed',
+                error: error.message,
+            });
         }
     }
 }
