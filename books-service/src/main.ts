@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
@@ -17,6 +18,20 @@ async function bootstrap() {
 			},
 		},
 	});
+
+	const options = new DocumentBuilder()
+		.setTitle('Book Service APIs')
+		.setDescription(`Book Service APIs`)
+		.setVersion('1.0.0')
+		.addServer(process.env.SWAGGER_SERVER, process.env.SWAGGER_ENV)
+		.build();
+	const document = SwaggerModule.createDocument(app, options);
+	SwaggerModule.setup('open-apis', app, document, {
+		swaggerOptions: {
+			persistAuthorization: false,
+		}
+	});
+
 
 	await app.startAllMicroservices();
 	await app.listen(port);

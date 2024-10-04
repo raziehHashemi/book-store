@@ -1,15 +1,20 @@
-import { Controller, Post, Body, Get, Param, HttpStatus, Res, Inject, UseGuards, } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, HttpStatus, Res, Inject, UseGuards, Req, } from '@nestjs/common';
 import { Response } from 'express';
 import { PurchasesService } from '../services/purchases.service';
 import { CreatePurchaseDto } from '../dtos/create-purchase.dto';
 import { JwtAuthGuard } from 'src/common/gaurds/jwt-auth.guard';
+import { ApiBody, ApiHeader, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Purchase')
 @Controller('purchases')
 @UseGuards(JwtAuthGuard)
 export class PurchasesController {
     constructor(
         @Inject() private readonly purchasesService: PurchasesService) { }
 
+    @ApiOperation({ summary: 'Create a purchase' })
+    @ApiHeader({ name: 'Authorization', description: 'Bearer' })
+    @ApiBody({ type: CreatePurchaseDto })
     @Post()
     async create(
         @Body() createPurchaseDto: CreatePurchaseDto,
@@ -31,11 +36,15 @@ export class PurchasesController {
         }
     }
 
+    @ApiOperation({ summary: 'Get all purchases' })
+    @ApiHeader({ name: 'Authorization', description: 'Bearer' })
     @Get()
     async findAll(
-        @Body() userId: string,
-        @Res() res: Response) {
+        @Res() res: Response,
+        @Req() req,
+    ) {
         try {
+            const userId = req.body.userId;
             const purchases = await this.purchasesService.findAll(userId);
             return res.status(HttpStatus.OK).json({
                 statusCode: HttpStatus.OK,
@@ -51,6 +60,9 @@ export class PurchasesController {
         }
     }
 
+    @ApiOperation({ summary: 'Get a purchase by id' })
+    @ApiHeader({ name: 'Authorization', description: 'Bearer' })
+    @ApiParam({ name: 'id', required: true })
     @Get(':id')
     async findOne(@Param('id') id: string, @Res() res: Response) {
         try {
@@ -75,12 +87,24 @@ export class PurchasesController {
         }
     }
 
+    @ApiOperation({ summary: 'Get all purchases by user id' })
+    @ApiHeader({ name: 'Authorization', description: 'Bearer' })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                bookId: { type: 'string', description: 'ID of the book to add to the cart' }
+            }
+        }
+    })
     @Post('add-to-cart')
     async addItemToCart(
-        @Body() { userId, bookId }: { userId: string, bookId: string },
+        @Body() { bookId }: { bookId: string },
         @Res() res: Response,
+        @Req() req,
     ) {
         try {
+            const userId = req.body.userId;
             const purchase = await this.purchasesService.addItemToCart(userId, bookId);
             return res.status(HttpStatus.OK).json({
                 statusCode: HttpStatus.OK,
@@ -96,12 +120,24 @@ export class PurchasesController {
         }
     }
 
+    @ApiOperation({ summary: 'Remove an item from cart' })
+    @ApiHeader({ name: 'Authorization', description: 'Bearer' })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                bookId: { type: 'string', description: 'ID of the book to remove from the cart' }
+            }
+        }
+    })
     @Post('remove-from-cart')
     async removeItemFromCart(
-        @Body() { userId, bookId }: { userId: string, bookId: string },
+        @Body() { bookId }: { bookId: string },
         @Res() res: Response,
+        @Req() req,
     ) {
         try {
+            const userId = req.body.userId;
             const purchase = await this.purchasesService.removeItemFromCart(userId, bookId);
             return res.status(HttpStatus.OK).json({
                 statusCode: HttpStatus.OK,
@@ -119,10 +155,11 @@ export class PurchasesController {
 
     @Post('complete-purchase')
     async completePurchase(
-        @Body() { userId }: { userId: string },
         @Res() res: Response,
+        @Req() req,
     ) {
         try {
+            const userId = req.body.userId;
             const purchase = await this.purchasesService.completePurchase(userId);
             return res.status(HttpStatus.OK).json({
                 statusCode: HttpStatus.OK,

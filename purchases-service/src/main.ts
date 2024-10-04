@@ -1,24 +1,38 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+	const app = await NestFactory.create(AppModule);
 
-  // RabbitMQ microservice configuration
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.RMQ,
-    options: {
-      urls: ['amqp://guest:guest@message-broker:5672'], // RabbitMQ URL
-      queue: 'books_queue', // Define a queue name
-      queueOptions: {
-        durable: true,
-      },
-    },
-  });
+	// RabbitMQ microservice configuration
+	app.connectMicroservice<MicroserviceOptions>({
+		transport: Transport.RMQ,
+		options: {
+			urls: [process.env.RABIT_URL],
+			queue: 'purchase_queue',
+			queueOptions: {
+				durable: true,
+			},
+		},
+	});
 
-  await app.startAllMicroservices();
-  await app.listen(3000);
+	const options = new DocumentBuilder()
+		.setTitle('Book Service APIs')
+		.setDescription(`Book Service APIs`)
+		.setVersion('1.0.0')
+		.addServer(process.env.SWAGGER_SERVER, process.env.SWAGGER_ENV)
+		.build();
+	const document = SwaggerModule.createDocument(app, options);
+	SwaggerModule.setup('open-apis', app, document, {
+		swaggerOptions: {
+			persistAuthorization: false,
+		}
+	});
+
+	await app.startAllMicroservices();
+	await app.listen(3000);
 }
 
 bootstrap();

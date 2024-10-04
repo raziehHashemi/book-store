@@ -1,14 +1,21 @@
 import { Controller, Get, Post, Body, Param, Query, Inject, Res, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { BooksService } from '../services/books.service';
 import { MessagePattern } from '@nestjs/microservices';
 import { SearchBooksDto } from '../dtos/search-book.dto';
 
+@ApiTags('Books')
 @Controller('books')
 export class BooksController {
 	constructor(
 		@Inject('BooksService') private readonly booksService: BooksService
 	) { }
 
+	@ApiOperation({ summary: 'Search books' })
+	@ApiQuery({ name: 'title', required: false })
+	@ApiQuery({ name: 'author', required: false })
+	@ApiQuery({ name: 'genre', required: false })
+	@ApiQuery({ name: 'year', required: false })
 	@Get()
 	async findAll(
 		@Query() query: SearchBooksDto,
@@ -30,6 +37,8 @@ export class BooksController {
 		}
 	}
 
+	@ApiOperation({ summary: 'Get a book by id' })
+	@ApiParam({ name: 'id', required: true })
 	@Get(':id')
 	async findOne(
 		@Param('id') id: string,
@@ -51,6 +60,7 @@ export class BooksController {
 		}
 	}
 
+	@ApiOperation({ summary: 'Get 20 top popular books' })
 	@Get('popular')
 	async getTopBooks(
 		@Res() res

@@ -15,7 +15,7 @@ export class UserRepository implements IUserRepository {
 
     async create(createUserDto: CreateUserDto): Promise<User> {
         try {
-            if (!createUserDto.membershipType) createUserDto.membershipType = MEMBERSHIP_TYPE.REGULAR;
+            if (!createUserDto.membershipType) createUserDto.membershipType = MEMBERSHIP_TYPE.NORMAL;
             createUserDto.password = this.hashPassword(createUserDto.password);
             const newUser = new this.userModel(createUserDto);
             return await newUser.save();

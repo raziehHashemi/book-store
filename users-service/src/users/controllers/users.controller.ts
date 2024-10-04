@@ -2,7 +2,9 @@ import { Controller, Post, Body, Inject, HttpStatus, Res } from '@nestjs/common'
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { UsersService } from '../services/users.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Users')
 @Controller('users')
 export class UsersController {
     constructor(
@@ -25,6 +27,16 @@ export class UsersController {
         return await this.usersService.update(userId, updateUserDto);
     }
 
+    @ApiOperation({ summary: 'Login' })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                username: { type: 'string', example: 'john_doe', description: 'Username of the user' },
+                password: { type: 'string', example: 'password123', description: 'Password of the user' }
+            }
+        }
+    })
     @Post('login')
     async login(
         @Body('username') username: string,
@@ -48,6 +60,7 @@ export class UsersController {
         }
     }
 
+    @ApiOperation({ summary: 'Signup' })
     @Post('signup')
     async signup(
         @Body() createUserDto: CreateUserDto,

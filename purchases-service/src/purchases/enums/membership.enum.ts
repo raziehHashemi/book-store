@@ -1,4 +1,4 @@
 export enum MEMBERSHIP_TYPE {
-    REGULAR = 'regular',
+    NORMAL = 'normal',
     PREMIUM = 'premium'
 };
