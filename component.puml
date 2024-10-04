@@ -1,0 +1,33 @@
+@startuml Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+LAYOUT_WITH_LEGEND()
+
+Person(user, "User")
+
+System_Boundary(bookStore, "Book Store") {
+    Container(bookService, "BookService", "Nestjs/ts")
+    Container(userSerivice, "UserService", "َNestjs/ts")
+    Container(purchaseService, "PurchaseService", "َNestjs/ts")
+
+    ContainerDb(mongo, "MongoDB")
+    ContainerDb(redis, "Redis")
+    ContainerDb(rabbit, "RabbitMQ")
+}
+
+Rel(user, userSerivice, "Uses", "https/json")
+Rel(user, bookService, "Uses", "https/json")
+Rel(user, purchaseService, "Uses", "https/json")
+
+BiRel_D(purchaseService, rabbit, "Uses", "tcp")
+BiRel_D(userSerivice, rabbit, "Uses", "tcp")
+BiRel_D(bookService, rabbit, "Uses", "tcp")
+
+BiRel_D(purchaseService, mongo, "Uses", "tcp")
+BiRel_D(userSerivice, mongo, "Uses", "tcp")
+BiRel_D(bookService, mongo, "Uses", "tcp")
+
+BiRel_D(bookService, redis, "Uses", "tcp")
+
+
+
+@enduml
