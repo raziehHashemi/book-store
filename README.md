@@ -11,6 +11,9 @@ This section provides a overview of the Book Store project technologies used.
     - Uses a non-relational database MongoDB.
     - Secures endpoints using JWT (JSON Web Tokens) for authentication.
 
+## Container Layer Diagram
+![alt][container.png](https://github.com/raziehHashemi/book-store/blob/main/container.png)
+
 ## Architecture
 The architecture of the Book Store project is based on microservices:
 
