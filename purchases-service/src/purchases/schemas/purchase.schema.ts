@@ -26,3 +26,4 @@ export class Purchase extends Document {
 }
 
 export const PurchaseSchema = SchemaFactory.createForClass(Purchase);
+PurchaseSchema.index({ userId: 1 });
